@@ -9,14 +9,18 @@ app = Flask(__name__)
 CORS(app)
 request_methods = ["POST"]
 
-def get_temp_folder():
-    # 獲取臨時目錄
-    return tempfile.gettempdir()
+def get_download_folder():
+    # 獲取使用者的 Downloads 資料夾路徑
+    if os.name == 'nt':  # Windows
+        return os.path.join(os.environ['USERPROFILE'], 'Downloads')
+    # else:  # macOS 或 Linux
+    #     return os.path.join(os.environ['HOME'], 'Downloads')
 
-def download_youtube(request_data):
+def dowload_youtube(request_data):
+
     url = request_data['url']
-    download_folder = get_temp_folder()
-    print(f"Download folder: {download_folder}")
+    download_folder = get_download_folder()
+    print(download_folder)
 
     output_template = os.path.join(download_folder, 'downloaded_video.%(ext)s')
 
