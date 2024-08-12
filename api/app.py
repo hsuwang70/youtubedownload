@@ -1,48 +1,53 @@
-import yt_dlp
-from flask import Flask, request, Response
-from flask_cors import CORS
-import json
+# -*- coding: utf-8 -*-
+
 import os
+import json
+from flask import Flask, request, Response, send_file
+from flask_cors import CORS
+import yt_dlp
 import tempfile
 
 app = Flask(__name__)
 CORS(app)
-request_methods = ["POST"]
 
-def get_download_folder():
-    # 獲取使用者的 Downloads 資料夾路徑
-    if os.name == 'nt':  # Windows
-        return os.path.join(os.environ['USERPROFILE'], 'Downloads')
-    # else:  # macOS 或 Linux
-    #     return os.path.join(os.environ['HOME'], 'Downloads')
+api_key = os.getenv("YOUTUBE_API_KEY")
 
-def download_youtube(request_data):
 
-    url = request_data['url']
-    download_folder = get_download_folder()
-    print(download_folder)
-
-    output_template = os.path.join(download_folder, 'downloaded_video.%(ext)s')
+def download_youtube_video(url):
+    temp_dir = tempfile.gettempdir()
+    output_template = os.path.join(temp_dir, 'downloaded_video.%(ext)s')
 
     ydl_opts = {
         'outtmpl': output_template,
+        'format': 'best',
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-        return {"status": 1, "message": "Download successful"}
+        # Find the downloaded file
+        for file in os.listdir(temp_dir):
+            if file.startswith('downloaded_video'):
+                return os.path.join(temp_dir, file)
+        return None
     except Exception as e:
-        return {"status": 0, "error_msg": str(e)}
+        return str(e)
 
-@app.route('/downloadyoutube', methods=['POST'])
-def get_report():
+
+@app.route('/searchvideo', methods=['POST'])
+def search_videos():
     try:
         request_data = request.json
-        result = download_youtube(request_data)
-        return Response(json.dumps(result), mimetype="application/json")
+        url = request_data['url']
+
+        file_path = download_youtube_video(url)
+        if file_path and os.path.exists(file_path):
+            return send_file(file_path, as_attachment=True, download_name='downloaded_video.mp4')
+        else:
+            return Response(json.dumps({"status": "error", "message": "Failed to download video"}), mimetype='application/json'), 500
     except Exception as e:
         return Response(json.dumps({"status": 0, "error_msg": str(e)}), mimetype='application/json'), 400
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3000, debug=True)
