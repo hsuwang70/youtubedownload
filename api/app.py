@@ -16,7 +16,7 @@ def get_download_folder():
     # else:  # macOS 或 Linux
     #     return os.path.join(os.environ['HOME'], 'Downloads')
 
-def dowload_youtube(request_data):
+def download_youtube(request_data):
 
     url = request_data['url']
     download_folder = get_download_folder()
