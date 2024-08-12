@@ -27,8 +27,12 @@ def dowload_youtube(request_data):
         'outtmpl': output_template,
     }
 
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+        return {"status": 1, "message": "Download successful"}
+    except Exception as e:
+        return {"status": 0, "error_msg": str(e)}
 
 @app.route('/dowloadyoutube', methods=['POST'])
 def getreport():
