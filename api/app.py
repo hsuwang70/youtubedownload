@@ -8,18 +8,14 @@ app = Flask(__name__)
 CORS(app)
 request_methods = ["POST"]
 
-def get_download_folder():
-    # 獲取使用者的 Downloads 資料夾路徑
-    if os.name == 'nt':  # Windows
-        return os.path.join(os.environ['USERPROFILE'], 'Downloads')
-    else:  # macOS 或 Linux
-        return os.path.join(os.environ['HOME'], 'Downloads')
+def get_temp_folder():
+    # 獲取臨時目錄
+    return tempfile.gettempdir()
 
-def dowload_youtube(request_data):
-
+def download_youtube(request_data):
     url = request_data['url']
-    download_folder = get_download_folder()
-    print(download_folder)
+    download_folder = get_temp_folder()
+    print(f"Download folder: {download_folder}")
 
     output_template = os.path.join(download_folder, 'downloaded_video.%(ext)s')
 
@@ -34,16 +30,14 @@ def dowload_youtube(request_data):
     except Exception as e:
         return {"status": 0, "error_msg": str(e)}
 
-@app.route('/dowloadyoutube', methods=['POST'])
-def getreport():
+@app.route('/downloadyoutube', methods=['POST'])
+def get_report():
     try:
         request_data = request.json
-        result = dowload_youtube(request_data)
-        # request_data = request.json
+        result = download_youtube(request_data)
         return Response(json.dumps(result), mimetype="application/json")
     except Exception as e:
         return Response(json.dumps({"status": 0, "error_msg": str(e)}), mimetype='application/json'), 400
 
-
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=3000,debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=True)
